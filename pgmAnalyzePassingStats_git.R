@@ -1,10 +1,10 @@
 ###############  PROGRAM HEADER #########################
-# Program Name:  pgmScrapePassingStats
+# Program Name:  pgmAnalyzePassingStats_git
 # 
-# Purpose:  Scrape weekly NFL data from www.profootballreference.com
+# Purpose:  Analyze Passing data from PFR.com 
 # 
 # Program Change Log:
-# 2018-11-03-DAZ  Final draft scrape code created by DAZ
+# 2020-01-17 Program created
 #
 #
 ############### END PROGRAM HEADER ##########################
