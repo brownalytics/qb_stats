@@ -63,8 +63,10 @@ fncModelSummary_Univariate <- function(model = model){
 passer_data = passer_data_pfr
 
 passer_data <- passer_data %>% 
-  mutate(fdtd_pa = (td + first_downs)/att) %>% 
-  filter(szn < 2019)
+  mutate(fdtd_pa = (td + first_downs)/att
+         ,td_int_ratio = td/int) %>% 
+  filter(szn < 2019) %>% 
+  mutate(td_int_ratio = ifelse(td_int_ratio == 'Inf', NA, td_int_ratio))
 
 #### split data into train/test sets ####
 set.seed(65)
@@ -123,6 +125,12 @@ lm_int_pinc = lm(data = passer_data
                 ,win_pct ~ int_pinc
                 ,method = 'qr')
 summary(lm_int_pinc)
+
+lm_td_int_ratio = lm(data = passer_data
+                 ,win_pct ~ td_int_ratio
+                 ,method = 'qr')
+summary(lm_td_int_ratio)
+
 
 lm_first_downs = lm(data = passer_data
                 ,win_pct ~ first_downs
@@ -225,6 +233,7 @@ fncModelSummary_Univariate(model = lm_td_pc)
 fncModelSummary_Univariate(model = lm_td_pg)
 fncModelSummary_Univariate(model = lm_ypa)
 fncModelSummary_Univariate(model = lm_ypc)
+fncModelSummary_Univariate(model = lm_td_int_ratio)
 
 univariate_models_smy = model_summary %>% 
   arrange(model_pval, desc(model_r2))
@@ -244,6 +253,19 @@ lm_cmp_pct_stab = lm(data = passer_stability
                      ,cmp_pct ~ ly_cmp_pct
                      ,method = 'qr')
 summary(lm_cmp_pct_stab)
+
+passer_stability = passer_data %>% 
+  select(player, td_int_ratio, szn) %>%
+  arrange(player, szn) %>% 
+  group_by(player) %>% 
+  mutate(ly_td_int_ratio = lag(td_int_ratio)) %>% 
+  ungroup()
+
+lm_td_int_ratio_stab = lm(data = passer_stability
+                     ,td_int_ratio ~ ly_td_int_ratio
+                     ,method = 'qr')
+summary(lm_td_int_ratio_stab)
+
 
 passer_stability = passer_data %>% 
   select(player, pass_yds, szn) %>%
@@ -557,6 +579,7 @@ fncModelSummary_Univariate(model = lm_td_pc_stab)
 fncModelSummary_Univariate(model = lm_td_pg_stab)
 fncModelSummary_Univariate(model = lm_ypa_stab)
 fncModelSummary_Univariate(model = lm_ypc_stab)
+fncModelSummary_Univariate(model = lm_td_int_ratio_stab)
 
 univariate_stability_smy = model_summary %>% 
   arrange(model_pval, desc(model_r2))
@@ -573,6 +596,11 @@ univariate_stability_smy = univariate_stability_smy %>%
 
 mean_model_r2 = mean(univariate_models_smy$model_r2)
 mean_yoy_model_r2 = mean(univariate_stability_smy$yoy_stab_model_r2)
+
+combined_univariate_models = univariate_models_smy %>% 
+  left_join(univariate_stability_smy %>% select(model_ivar, yoy_stab_model_pval,yoy_stab_model_r2)
+            ,by = 'model_ivar') %>% 
+   filter(model_ivar != 'qbr')
 
 combined_model_comp = univariate_models_smy %>% 
   left_join(univariate_stability_smy %>% select(model_ivar, yoy_stab_model_pval,yoy_stab_model_r2)
@@ -915,8 +943,7 @@ summary(lm_qb_win_pct)
 
 ## treat collinearity >> No evidence of collinearity present!
 
-
-# cor7: r = .67 b/t cmp_pct and fdtd_pa; dropped cmp_pct
+save(lm_qb_win_pct, file = 'Z:/3_RData/5_NFL/1_BROWNALYTICS/projects/2020/qb_stats/lm_qb_win_pct.R')
 
 #### predict xWinPct ###
 
